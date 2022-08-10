@@ -1,25 +1,42 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
+import { auth } from '@/Firebase'
 
 const routes = [
   {
     path: '/',
     name: 'home',
-    component: HomeView
+    component: HomeView,
+    meta:{requiresAuth:true}
   },
   {
     path: '/about',
     name: 'about',
-    // route level code-splitting
-    // this generates a separate chunk (about.[hash].js) for this route
-    // which is lazy-loaded when the route is visited.
-    component: () => import(/* webpackChunkName: "about" */ '../views/AboutView.vue')
-  }
+    component: () => import('../views/AboutView.vue'),
+    meta:{requiresAuth:true}
+  },
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('../components/RegisterForm.vue'),
+  },
 ]
 
 const router = createRouter({
   history: createWebHistory(process.env.BASE_URL),
   routes
+})
+router.beforeEach((to , from , next)=>{
+  if (to.name === 'login' && auth.currentUser){
+    console.log('redirect to home');
+    next('/')
+    return;
+  }
+  if (to.matched.some(record => record.meta.requiresAuth) && !auth.currentUser){
+    next('/login')
+    return;
+  }
+  else next();
 })
 
 export default router
